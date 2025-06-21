@@ -1,7 +1,7 @@
 /*
 1820ANKIT2029 (AGENTVEER)
 
-g++ Q.cpp && ./a.exe < input.txt > output.txt && diff -y --color=always output.txt actualOutput.txt | less -R
+g++ Q.cpp && ./a.exe < input.txt > output.txt && diff --color=always output.txt actualOutput.txt | less -R
 */
 
 #include <bits/stdc++.h>
@@ -70,5 +70,5 @@ main(){
 }
 
 /*
-g++ Q.cpp && ./a.exe < input.txt > output.txt && diff -y --color=always output.txt actualOutput.txt | less -R
+g++ Q.cpp && ./a.exe < input.txt > output.txt && diff --color=always output.txt actualOutput.txt | less -R
 */
