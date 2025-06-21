@@ -1,5 +1,7 @@
 /*
 1820ANKIT2029 (AGENTVEER)
+
+g++ Q.cpp && ./a.exe < input.txt > output.txt && diff -y --color=always output.txt actualOutput.txt | less -R
 */
 
 #include <bits/stdc++.h>
@@ -66,3 +68,7 @@ main(){
     while(t--)
         solve();
 }
+
+/*
+g++ Q.cpp && ./a.exe < input.txt > output.txt && diff -y --color=always output.txt actualOutput.txt | less -R
+*/
