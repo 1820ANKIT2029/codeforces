@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Repository Browser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Header -->
+                <header class="app-header">
+                    <div class="header-content">
+                        <h2>GitHub Repository</h2>
+                        <div class="repo-input-section">
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="repoUrl" 
+                                    class="form-control repo-input" 
+                                    placeholder="Enter GitHub repository URL (e.g., https://github.com/owner/repo)"
+                                >
+                                <button id="loadRepoBtn" class="btn btn--primary">Load</button>
+                            </div>
+                        </div>
+                        <div class="repo-info" id="repoInfo" style="display: none;">
+                            <div class="repo-meta">
+                                <h4 id="repoName"></h4>
+                                <p id="repoDescription"></p>
+                                <div class="repo-stats">
+                                    <span class="status status--info" id="repoStars">⭐ 0</span>
+                                    <span class="status status--info" id="repoForks">🍴 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="sidebar-header">
+                    <h4>Files</h4>
+                    <div class="search-section">
+                        <input 
+                            type="text" 
+                            id="fileSearch" 
+                            class="form-control search-input" 
+                            placeholder="Search files..."
+                        >
+                    </div>
+                </div>
+                <div class="file-tree" id="fileTree">
+                    <div class="empty-state">
+                        <p>Enter a GitHub repository URL to browse files</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Editor Panel -->
+            <section class="editor-panel">
+                <div class="editor-header">
+                    <div class="breadcrumb" id="breadcrumb">
+                        <span class="breadcrumb-item">Select a file to view</span>
+                    </div>
+                    <div class="editor-controls">
+                        <select id="themeSelector" class="form-control theme-selector">
+                            <option value="vs-dark">VS Code Dark</option>
+                            <option value="vs">VS Code Light</option>
+                            <option value="hc-black">High Contrast</option>
+                        </select>
+                        <button id="downloadBtn" class="btn btn--outline btn--sm" style="display: none;">Download</button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div id="monaco-editor" class="monaco-editor-wrapper"></div>
+                    <div class="editor-placeholder" id="editorPlaceholder">
+                        <div class="placeholder-content">
+                            <h3>🗂️ File Explorer</h3>
+                            <p>Select a file from the tree on the left to view its contents here.</p>
+                            <ul>
+                                <li>📁 Click on folders to expand/collapse</li>
+                                <li>📄 Click on files to view content</li>
+                                <li>🔍 Use the search box to find files</li>
+                                <li>🎨 Switch themes using the dropdown</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Loading repository...</p>
+            </div>
+        </div>
+
+        <!-- Error Modal -->
+        <div class="modal-overlay" id="errorModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Error</h3>
+                    <button class="btn btn--outline btn--sm" onclick="closeErrorModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn--primary" onclick="closeErrorModal()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
