@@ -167,15 +167,13 @@ Priority Queue
 
 /* Union-Find Disjoint Sets (UFDS) */
 typedef vector<int> vi;
-class UnionFind
-{
+class UnionFind{
 private:
     vi p, rank, setSize; // vi p is the key part
     int numSets;
 
 public:
-    UnionFind(int N)
-    {
+    UnionFind(int N){
         p.assign(N, 0);
         for (int i = 0; i < N; ++i)
             p[i] = i;
@@ -187,8 +185,7 @@ public:
     bool isSameSet(int i, int j) { return findSet(i) == findSet(j); }
     int numDisjointSets() { return numSets; }            // optional
     int sizeOfSet(int i) { return setSize[findSet(i)]; } // optional
-    void unionSet(int i, int j)
-    {
+    void unionSet(int i, int j){
         if (isSameSet(i, j))
             return;                         // i and j are in same set
         int x = findSet(i), y = findSet(j); // find both rep items
@@ -201,8 +198,8 @@ public:
         --numSets;                // a union reduces numSets
     }
 };
-int EXAMPLE()
-{
+
+int EXAMPLE(){
     UnionFind UF(5);                      // create 5 disjoint sets
     printf("%d\n", UF.numDisjointSets()); // 5
     UF.unionSet(0, 1);
@@ -234,15 +231,13 @@ typedef long long ll; // for extra flexibility
 typedef vector<ll> vll;
 typedef vector<int> vi;
 
-class FenwickTree
-{ // index 0 is not used
+class FenwickTree{ // index 0 is not used
 private:
     vll ft; // internal FT is an array
 public:
     FenwickTree(int m) { ft.assign(m + 1, 0); } // create an empty FT
 
-    void build(const vll &f)
-    {
+    void build(const vll &f){
         int m = (int)f.size() - 1; // note f[0] is always 0
         ft.assign(m + 1, 0);
         for (int i = 1; i <= m; ++i)
@@ -255,16 +250,14 @@ public:
 
     FenwickTree(const vll &f) { build(f); } // create FT based on f
 
-    FenwickTree(int m, const vi &s)
-    { // create FT based on s
+    FenwickTree(int m, const vi &s){ // create FT based on s
         vll f(m + 1, 0);
         for (int i = 0; i < (int)s.size(); ++i) // do the conversion first
             ++f[s[i]];                          // in O(n)
         build(f);                               // in O(m)
     }
 
-    ll rsq(int j)
-    { // returns RSQ(1, j)
+    ll rsq(int j){ // returns RSQ(1, j)
         ll sum = 0;
         for (; j; j -= LSOne(j))
             sum += ft[j];
@@ -274,22 +267,18 @@ public:
     ll rsq(int i, int j) { return rsq(j) - rsq(i - 1); } // inc/exclusion
 
     // updates value of the i-th element by v (v can be +ve/inc or -ve/dec)
-    void update(int i, ll v)
-    {
+    void update(int i, ll v){
         for (; i < (int)ft.size(); i += LSOne(i))
             ft[i] += v;
     }
 
-    int select(ll k)
-    { // O(log m)
+    int select(ll k){ // O(log m)
         int p = 1;
         while (p * 2 < (int)ft.size())
             p *= 2;
         int i = 0;
-        while (p)
-        {
-            if (k > ft[i + p])
-            {
+        while (p){
+            if (k > ft[i + p]){
                 k -= ft[i + p];
                 i += p;
             }
@@ -299,43 +288,37 @@ public:
     }
 };
 
-class RUPQ
-{ // RUPQ variant
+class RUPQ{               // RUPQ variant
 private:
-    FenwickTree ft; // internally use PURQ FT
+    FenwickTree ft;       // internally use PURQ FT
 public:
     RUPQ(int m) : ft(FenwickTree(m)) {}
-    void range_update(int ui, int uj, ll v)
-    {
+    void range_update(int ui, int uj, ll v){
         ft.update(ui, v);      // [ui, ui+1, .., m] +v
         ft.update(uj + 1, -v); // [uj+1, uj+2, .., m] -v
     } // [ui, ui+1, .., uj] +v
     ll point_query(int i) { return ft.rsq(i); } // rsq(i) is sufficient
 };
 
-class RURQ
-{                     // RURQ variant
+class RURQ{           // RURQ variant
 private:              // needs two helper FTs
     RUPQ rupq;        // one RUPQ and
     FenwickTree purq; // one PURQ
 public:
     RURQ(int m) : rupq(RUPQ(m)), purq(FenwickTree(m)) {} // initialization
-    void range_update(int ui, int uj, ll v)
-    {
+    void range_update(int ui, int uj, ll v){
         rupq.range_update(ui, uj, v);  // [ui, ui+1, .., uj] +v
         purq.update(ui, v * (ui - 1)); // -(ui-1)*v before ui
         purq.update(uj + 1, -v * uj);  // +(uj-ui+1)*v after uj
     }
-    ll rsq(int j)
-    {
+    ll rsq(int j){
         return rupq.point_query(j) * j - // optimistic calculation
                purq.rsq(j);              // cancelation factor
     }
     ll rsq(int i, int j) { return rsq(j) - rsq(i - 1); } // standard
 };
 
-int example()
-{
+int example(){
     vll f = {0, 0, 1, 0, 1, 2, 3, 2, 1, 1, 0}; // index 0 is always 0
     FenwickTree ft(f);
     printf("%lld\n", ft.rsq(1, 6));  // 7 => ft[6]+ft[4] = 5+2 = 7
@@ -361,8 +344,7 @@ int example()
 /* SegmentTree */
 typedef vector<int> vi;
 
-class SegmentTree
-{
+class SegmentTree{
 private:
     int n;          // n = (int)A.size()
     vi A, st, lazy; // the arrays
@@ -370,21 +352,15 @@ private:
     int l(int p) { return p << 1; }       // go to left child
     int r(int p) { return (p << 1) + 1; } // go to right child
 
-    int conquer(int a, int b)
-    {
-        if (a == -1)
-            return b; // corner case
-        if (b == -1)
-            return a;
+    int conquer(int a, int b){
+        if (a == -1) return b; // corner case
+        if (b == -1) return a;
         return min(a, b); // RMQ
     }
 
-    void build(int p, int L, int R)
-    { // O(n)
-        if (L == R)
-            st[p] = A[L]; // base case
-        else
-        {
+    void build(int p, int L, int R){ // O(n)
+        if (L == R) st[p] = A[L]; // base case
+        else{
             int m = (L + R) / 2;
             build(l(p), L, m);
             build(r(p), m + 1, R);
@@ -392,10 +368,8 @@ private:
         }
     }
 
-    void propagate(int p, int L, int R)
-    {
-        if (lazy[p] != -1)
-        {                                          // has a lazy flag
+    void propagate(int p, int L, int R){
+        if (lazy[p] != -1){                        // has a lazy flag
             st[p] = lazy[p];                       // [L..R] has same value
             if (L != R)                            // not a leaf
                 lazy[l(p)] = lazy[r(p)] = lazy[p]; // propagate downwards
@@ -405,30 +379,23 @@ private:
         }
     }
 
-    int RMQ(int p, int L, int R, int i, int j)
-    {                       // O(log n)
-        propagate(p, L, R); // lazy propagation
-        if (i > j)
-            return -1; // infeasible
-        if ((L >= i) && (R <= j))
-            return st[p]; // found the segment
+    int RMQ(int p, int L, int R, int i, int j){    // O(log n)
+        propagate(p, L, R);                        // lazy propagation
+        if (i > j) return -1;                      // infeasible
+        if ((L >= i) && (R <= j)) return st[p];    // found the segment
         int m = (L + R) / 2;
         return conquer(RMQ(l(p), L, m, i, min(m, j)),
                        RMQ(r(p), m + 1, R, max(i, m + 1), j));
     }
 
-    void update(int p, int L, int R, int i, int j, int val)
-    {                       // O(log n)
-        propagate(p, L, R); // lazy propagation
-        if (i > j)
-            return;
-        if ((L >= i) && (R <= j))
-        {                       // found the segment
-            lazy[p] = val;      // update this
-            propagate(p, L, R); // lazy propagation
+    void update(int p, int L, int R, int i, int j, int val){ // O(log n)
+        propagate(p, L, R);                     // lazy propagation
+        if (i > j) return;
+        if ((L >= i) && (R <= j)){              // found the segment
+            lazy[p] = val;                      // update this
+            propagate(p, L, R);                 // lazy propagation
         }
-        else
-        {
+        else{
             int m = (L + R) / 2;
             update(l(p), L, m, i, min(m, j), val);
             update(r(p), m + 1, R, max(i, m + 1), j, val);
@@ -441,8 +408,7 @@ private:
 public:
     SegmentTree(int sz) : n(sz), A(n), st(4 * n), lazy(4 * n, -1) {}
 
-    SegmentTree(const vi &initialA) : SegmentTree((int)initialA.size())
-    {
+    SegmentTree(const vi &initialA) : SegmentTree((int)initialA.size()){
         A = initialA;
         build(1, 0, n - 1);
     }
@@ -452,8 +418,7 @@ public:
     int RMQ(int i, int j) { return RMQ(1, 0, n - 1, i, j); }
 };
 
-int example()
-{
+int example(){
     vi A = {18, 17, 13, 19, 15, 11, 20, 99}; // make n a power of 2
     SegmentTree st(A);
 
@@ -508,8 +473,7 @@ void dfs(int u){                               // normal usage
 */
 
 #define GRAPHSIZE 20
-enum
-{
+enum{
     w = 0,
     g = 1,
     b = 2
@@ -519,15 +483,12 @@ int n, time_counter;
 int c[GRAPHSIZE], Parent[GRAPHSIZE], discovery_time[GRAPHSIZE], finishing_time[GRAPHSIZE];
 vector<vector<int>> Adj(GRAPHSIZE);
 
-void DFS_VISIT(int v)
-{
+void DFS_VISIT(int v){
     c[v] = g;
     time_counter = time_counter + 1;
     discovery_time[v] = time_counter;
-    for (int i = 0; i < Adj[v].size(); i++)
-    {
-        if (c[Adj[v][i]] == w)
-        {
+    for (int i = 0; i < Adj[v].size(); i++){
+        if (c[Adj[v][i]] == w){
             Parent[Adj[v][i]] = v;
             DFS_VISIT(Adj[v][i]);
         }
@@ -537,22 +498,16 @@ void DFS_VISIT(int v)
     c[v] = b;
 }
 
-void DFS()
-{
-    for (int i = 0; i < n; i++)
-    {
+void DFS(){
+    for (int i = 0; i < n; i++){
         c[i] = w;
         discovery_time[i] = -1;
         finishing_time[i] = -1;
         Parent[i] = -1;
     }
     time_counter = 0;
-    for (int i = 0; i < n; i++)
-    {
-        if (c[i] == w)
-        {
-            DFS_VISIT(i);
-        }
+    for (int i = 0; i < n; i++){
+        if (c[i] == w) DFS_VISIT(i);
     }
 }
 
@@ -560,19 +515,16 @@ int main()
 {
     int temp, s;
     cin >> n;
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++){
         cin >> s;
-        for (int j = 0; j < s; j++)
-        {
+        for (int j = 0; j < s; j++){
             cin >> temp;
             Adj[i].push_back(temp);
         }
     }
 
     DFS();
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++){
         cout << Parent[i] << " ";
     }
     cout << endl;
@@ -604,8 +556,7 @@ $ ./a.exe
 // BFS
 
 #define GRAPHSIZE 20
-enum
-{
+enum{
     w = 0,
     g = 1,
     b = 2
@@ -615,21 +566,17 @@ int n, time_counter;
 int c[GRAPHSIZE], Parent[GRAPHSIZE], d[GRAPHSIZE];
 vector<vector<int>> Adj(GRAPHSIZE);
 
-void BFS_VISIT(int v)
-{
+void BFS_VISIT(int v){
     queue<int> q;
     int node;
     d[v] = 0;
     q.push(v); // enqueue v
     c[v] = g;
-    while (!q.empty())
-    {
+    while (!q.empty()){
         int node = q.front();
         q.pop(); // dequeue
-        for (int neighbor : Adj[node])
-        {
-            if (c[neighbor] == w)
-            {
+        for (int neighbor : Adj[node]){
+            if (c[neighbor] == w){
                 q.push(neighbor);
                 c[neighbor] = g;
                 Parent[neighbor] = node;
@@ -640,41 +587,30 @@ void BFS_VISIT(int v)
     }
 }
 
-void BFS()
-{
-    for (int i = 0; i < n; i++)
-    {
+void BFS(){
+    for (int i = 0; i < n; i++){
         c[i] = w;
         Parent[i] = -1;
         d[i] = INT32_MAX;
     }
 
     for (int i = 0; i < n; i++)
-    {
-        if (c[i] == w)
-        {
-            BFS_VISIT(i);
-        }
-    }
+        if (c[i] == w) BFS_VISIT(i);
 }
 
-int main()
-{
+int main(){
     int temp, s;
     cin >> n;
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++){
         cin >> s;
-        for (int j = 0; j < s; j++)
-        {
+        for (int j = 0; j < s; j++){
             cin >> temp;
             Adj[i].push_back(temp);
         }
     }
 
     BFS();
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++){
         cout << Parent[i] << " ";
     }
     cout << endl;
@@ -854,27 +790,23 @@ for (int u = 0; u < V; ++u)
 // Finding Strongly Connected Components (Directed Graph)
 
 // Suffix Trie OR Trie
-struct vertex
-{
+struct vertex{
     char alphabet;
     bool exist;
     vector<vertex *> child;
     vertex(char a) : alphabet(a), exist(false) { child.assign(26, NULL); }
 };
 
-class Trie
-{        // this is TRIE
-private: // NOT Suffix Trie
+class Trie{   // this is TRIE
+private:      // NOT Suffix Trie
     vertex *root;
 
 public:
     Trie() { root = new vertex('!'); }
 
-    void insert(string word)
-    { // insert a word into trie
+    void insert(string word){ // insert a word into trie
         vertex *cur = root;
-        for (int i = 0; i < (int)word.size(); ++i)
-        { // O(n)
+        for (int i = 0; i < (int)word.size(); ++i){ // O(n)
             int alphaNum = word[i] - 'A';
             if (cur->child[alphaNum] == NULL) // add new branch if NULL
                 cur->child[alphaNum] = new vertex(word[i]);
@@ -883,11 +815,9 @@ public:
         cur->exist = true;
     }
 
-    bool search(string word)
-    { // true if word in trie
+    bool search(string word){ // true if word in trie
         vertex *cur = root;
-        for (int i = 0; i < (int)word.size(); ++i)
-        { // O(m)
+        for (int i = 0; i < (int)word.size(); ++i){ // O(m)
             int alphaNum = word[i] - 'A';
             if (cur->child[alphaNum] == NULL) // not found
                 return false;
@@ -896,11 +826,9 @@ public:
         return cur->exist; // check exist flag
     }
 
-    bool startsWith(string prefix)
-    { // true if match prefix
+    bool startsWith(string prefix){ // true if match prefix
         vertex *cur = root;
-        for (int i = 0; i < (int)prefix.size(); ++i)
-        {
+        for (int i = 0; i < (int)prefix.size(); ++i){
             int alphaNum = prefix[i] - 'A';
             if (cur->child[alphaNum] == NULL) // not found
                 return false;
@@ -922,8 +850,7 @@ private:
         vi c(maxi, 0);                      // clear frequency table
         for (int i = 0; i < n; ++i)         // count the frequency
             ++c[i + k < n ? RA[i + k] : 0]; // of each integer rank
-        for (int i = 0, sum = 0; i < maxi; ++i)
-        {
+        for (int i = 0, sum = 0; i < maxi; ++i){
             int t = c[i];
             c[i] = sum;
             sum += t;
@@ -940,8 +867,7 @@ private:
         RA.resize(n);
         for (int i = 0; i < n; ++i)
             RA[i] = T[i]; // initial rankings
-        for (int k = 1; k < n; k <<= 1)
-        { // repeat log_2 n times
+        for (int k = 1; k < n; k <<= 1){ // repeat log_2 n times
             // this is actually radix sort
             countingSort(k); // sort by 2nd item
             countingSort(0); // stable-sort by 1st item
@@ -964,10 +890,8 @@ private:
         Phi[SA[0]] = -1;            // default value
         for (int i = 1; i < n; ++i) // compute Phi in O(n)
             Phi[SA[i]] = SA[i - 1]; // remember prev suffix
-        for (int i = 0, L = 0; i < n; ++i)
-        { // compute PLCP in O(n)
-            if (Phi[i] == -1)
-            {
+        for (int i = 0, L = 0; i < n; ++i){ // compute PLCP in O(n)
+            if (Phi[i] == -1){
                 PLCP[i] = 0;
                 continue;
             } // special case
