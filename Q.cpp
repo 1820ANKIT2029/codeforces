@@ -8,8 +8,8 @@ g++ Q.cpp && ./a.exe < input.txt > output.txt && diff --color=always output.txt 
 using namespace std;
 
 // loop
-#define loop(x, n) for(int i=(x); i<(n); i++)
-#define rloop(x, n) for(int i=(x); i>=(n); i--)  // eg: x=n-1, x=0
+#define for(i, x, n) for(int (i)=(x); (i)<(n); (i)++)
+#define rfor(i, x, n) for(int (i)=(x); (i)>=(n); (i)--)  // eg: x=n-1, x=0
 
 // sort
 #define srt(v) sort((v).begin(), (v).end())
@@ -26,45 +26,137 @@ typedef vector<pii> vii;
 typedef vector<pll> vll;
 typedef vector<bool> vb;
 typedef vector<vi> vvi;
+typedef vector<vl> vvl;
 typedef vector<string> vs;
 
-const ll mod = 1e9 + 7;
+const ll MOD = 1e9 + 7;
 const ll inf = 1e18;
 const int inx[] = {0, 1, -1, 0};
 const int iny[] = {1, 0, 0, -1};
 const vector<string> stepDir = {"R","D","U","L"};
 
-bool cmp(pll &a, pll &b){
-    return (a.second - a.first)> (b.second - b.first);
-}
+// bool cmp(pll &a, pll &b){
+//     return (a.second - a.first)> (b.second - b.first);
+// }
 
-void solve(){
-    int n, N;
-    cin >> n;
-    N = 2*n+10;
-    vi a(n);
-    vi index(N, 0);
-    for(int i=0; i<n; i++) {cin >> a[i]; index[a[i]] = i+1;}
+#define Left(p)     (p<<1)+1
+#define Right(p)    (p<<1)+2
 
-    sort(a.begin(), a.end());
-    int cnt = 0;
-    int tmp;
-    for(int i=0; i<n; i++){
-        for(int j=i+1; j<n; j++){
-            tmp = a[i]*a[j];
-            if(tmp > N) break;
-            if(tmp == index[a[i]]+index[a[j]]) cnt++;
-        }
+class segmentTreeRURQLazy {
+    /*
+        Segment Tree Range Update Range Query Lazy Propagation
+    */
+
+    int size;
+    vl operations, values;
+
+    ll NEUTRAL_ELEMENT = LLONG_MAX;
+    ll NO_OPERATION = LLONG_MAX - 1;
+
+    ll modify_op(ll a, ll b){
+        if(b == NO_OPERATION) return a;
+        return b;
     }
 
-    cout << cnt << endl;
+    ll query_op(ll a, ll b){
+        return min(a, b);
+    }
+
+    void apply_mod_op(ll &a, ll b){
+        a = modify_op(a, b);
+    }
+
+    void propagate(int p, int L, int R){
+        if(L == R) return;
+
+        int mid = L +  ((R-L)>>1);
+        apply_mod_op(operations[Left(p)], operations[p]);
+        apply_mod_op(values[Left(p)], operations[p]);
+        apply_mod_op(operations[Right(p)], operations[p]);
+        apply_mod_op(values[Right(p)], operations[p]);
+        operations[p] = NO_OPERATION;
+    }
+
+    void modify(int p, int L, int R, int l, int r, int val){
+        propagate(p, L, R);
+        if(L > r || R < l) return;
+        if(L >= l && R<=r){
+            apply_mod_op(operations[p], val);
+            apply_mod_op(values[p], val);
+            return;
+        }
+
+        int mid = L + ((R-L)>>1);
+        modify(Left(p), L, mid, l, r, val);
+        modify(Right(p), mid+1, R, l, r, val);
+
+        values[p] = query_op(values[Left(p)], values[Right(p)]);
+        apply_mod_op(values[p], operations[p]);
+    }
+
+    ll query(int p, int L, int R, int l, int r){
+        propagate(p, L, R);
+        if(L > r || R < l) return NEUTRAL_ELEMENT;
+        if(L >= l && R<=r) return values[p];
+
+        int mid = L + ((R-L)>>1);
+        ll a = query(Left(p), L, mid, l, r);
+        ll b = query(Right(p), mid+1, R, l, r);
+        ll ans = query_op(a, b);
+        apply_mod_op(ans, operations[p]);
+        return ans;
+    }
+
+    // void build(int p, int L, int R){
+    //     if(L == R) {values[p] = 1; return;}
+
+    //     int mid = L + ((R-L)>>1);
+    //     build(Left(p), L, mid);
+    //     build(Right(p), mid+1, R);
+
+    //     values[p] = query_op(values[Left(p)], values[Right(p)]);
+    // }
+
+public:
+    segmentTreeRURQLazy(int n){
+        size = 1;
+        while(size < n) size *= 2;
+        operations.assign(2 * size, 0LL);
+        values.assign(2 * size, 0LL);
+        // build(0, 0, size-1);
+    }
+
+    void modify(int l, int r, int v){modify(0, 0, size-1, l, r, v);}
+    ll query(int l, int r){return query(0, 0, size-1, l, r);}
+};
+
+void solve(){
+	int n, m;
+    cin >> n >> m;
+
+    segmentTreeRURQLazy st(n);
+
+    int q, l, r, v, ind;
+    for(i, 0, m){
+        cin >> q;
+        if(q == 1){
+            cin >> l >> r >> v;
+            st.modify(l, r-1, v);
+        }
+        else{
+            cin >> l >> r;
+            cout << st.query(l, r-1) << endl;
+        }
+    }
+    
 }
 
 main(){
+	ios::sync_with_stdio(0);
     ll t;
 
     t = 1;
-    cin >> t;
+    // cin >> t;
     while(t--)
         solve();
 }
