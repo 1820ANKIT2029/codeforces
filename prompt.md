@@ -1,5 +1,5 @@
 Just replace the text in **[brackets]** with the details of your specific problem.
-############################################## The Prompt Template #########################################################
+# The Prompt Template
 
 I need a complete walkthrough for the following programming problem:
 
