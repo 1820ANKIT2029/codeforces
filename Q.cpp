@@ -8,12 +8,15 @@ g++ Q.cpp && ./a.exe < input.txt > output.txt && diff --color=always output.txt 
 using namespace std;
 
 // loop
-#define for(i, x, n) for(int (i)=(x); (i)<(n); (i)++)
-#define rfor(i, x, n) for(int (i)=(x); (i)>=(n); (i)--)  // eg: x=n-1, x=0
+#define FOR(i, x, n) for(int (i)=(x); (i)<(n); (i)++)
+#define rFOR(i, x, n) for(int (i)=(x); (i)>=(n); (i)--)  // eg: x=n-1, x=0
 
 // sort
 #define srt(v) sort((v).begin(), (v).end())
 #define srtR(v) sort(v.rbegin(), v.rend())
+
+#define Left(p)     (p<<1)+1
+#define Right(p)    (p<<1)+2
 
 typedef long long ll;
 typedef unsigned long long ull;
@@ -31,9 +34,11 @@ typedef vector<string> vs;
 
 const ll MOD = 1e9 + 7;
 const ll inf = 1e18;
+const double EPS = 1e-9;
 const int inx[] = {0, 1, -1, 0};
 const int iny[] = {1, 0, 0, -1};
 const vector<string> stepDir = {"R","D","U","L"};
+const int PrimeSize = 100001;
 
 // bool cmp(pll &a, pll &b){
 //     return (a.second - a.first)> (b.second - b.first);
