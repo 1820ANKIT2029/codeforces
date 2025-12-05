@@ -341,6 +341,29 @@ public:
     }
 };
 
+
+// simple union find implementation
+class unionfind(){
+   vector<int> p;
+   
+   int find(int u){
+      if(p[u] == u) return u;
+      return p[u] = find(p[u]);
+   }
+   
+   void Union(int u, int v){
+      int a = find(u);
+      int b = find(v);
+      
+      p[a] = b;
+   }
+   
+   bool sameSet(int u, int v){
+      if(find(u) == find(v)) return true;
+      return false;
+   }
+}
+
 int EXAMPLE(){
     UnionFind UF(5);                      // create 5 disjoint sets
     printf("%d\n", UF.numDisjointSets()); // 5
