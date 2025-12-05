@@ -146,8 +146,10 @@ Priority Queue
     output: Max Heap top: 30
             New Max Heap top: 20
 
+*/
 
-
+/*
+MIN-MAX PQ queue
 1. Using bBST for Priority Queue ADT:
     > A balanced BST (e.g., C++ STL set/multiset) can efficiently implement a Priority Queue ADT.
     > Insertion (insert(key)) takes O(logn) time.
@@ -164,6 +166,134 @@ Priority Queue
     > The RemoveKey(key) operation is simply remove(key), which also runs in O(logn).
 
 */
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template<typename T>
+class MinMaxPQ_BST {
+    multiset<T> s;   // balanced BST allowing duplicates
+
+public:
+    MinMaxPQ_BST() = default;
+
+    // Insert a key: O(log n)
+    void insert(const T &key) {
+        s.insert(key);
+    }
+
+    // Return true if empty
+    bool empty() const {
+        return s.empty();
+    }
+
+    // Get min (highest priority) - throws if empty
+    const T& get_min() const {
+        if (s.empty()) throw runtime_error("get_min on empty PQ");
+        return *s.begin();
+    }
+
+    // Get max - throws if empty
+    const T& get_max() const {
+        if (s.empty()) throw runtime_error("get_max on empty PQ");
+        return *s.rbegin();
+    }
+
+    // Remove and return min - O(log n)
+    T pop_min() {
+        if (s.empty()) throw runtime_error("pop_min on empty PQ");
+        auto it = s.begin();
+        T val = *it;
+        s.erase(it);
+        return val;
+    }
+
+    // Remove and return max - O(log n)
+    T pop_max() {
+        if (s.empty()) throw runtime_error("pop_max on empty PQ");
+        // rbegin is not erase-able directly; convert to base iterator
+        auto it = prev(s.end());
+        T val = *it;
+        s.erase(it);
+        return val;
+    }
+
+    // Remove one occurrence of key, return true if removed: O(log n)
+    bool remove_key(const T &key) {
+        auto it = s.find(key); // finds one instance (if any)
+        if (it == s.end()) return false;
+        s.erase(it);
+        return true;
+    }
+
+    // UpdateKey(oldkey, newkey): remove one oldkey and insert newkey
+    // returns true if oldkey existed and was replaced; O(log n)
+    bool update_key(const T &oldkey, const T &newkey) {
+        auto it = s.find(oldkey);
+        if (it == s.end()) return false;
+        s.erase(it);        // O(log n)
+        s.insert(newkey);   // O(log n)
+        return true;
+    }
+
+    // Size for convenience
+    size_t size() const { return s.size(); }
+
+    // Debug: print contents in sorted order
+    void debug_print() const {
+        cout << "Contents (sorted): ";
+        for (const auto &x : s) cout << x << ' ';
+        cout << '\n';
+    }
+};
+
+int main() {
+    MinMaxPQ_BST<int> pq;
+
+    pq.insert(5);
+    pq.insert(1);
+    pq.insert(10);
+    pq.insert(5); // duplicate
+
+    pq.debug_print(); // Contents (sorted): 1 5 5 10
+
+    cout << "min: " << pq.get_min() << '\n'; // 1
+    cout << "max: " << pq.get_max() << '\n'; // 10
+
+    cout << "pop_min -> " << pq.pop_min() << '\n'; // removes 1
+    pq.debug_print(); // 5 5 10
+
+    cout << "remove_key(5) -> " << pq.remove_key(5) << '\n'; // true (one 5 removed)
+    pq.debug_print(); // 5 10
+
+    cout << "update_key(10 -> 2) -> " << pq.update_key(10, 2) << '\n'; // true
+    pq.debug_print(); // 2 5
+
+    cout << "pop_max -> " << pq.pop_max() << '\n'; // removes 5
+    pq.debug_print(); // 2
+
+    cout << "pop_min -> " << pq.pop_min() << '\n'; // removes 2
+    cout << "empty? " << boolalpha << pq.empty() << '\n'; // true
+    return 0;
+}
+
+/*
+Contents (sorted): 1 5 5 10
+min: 1
+max: 10
+pop_min -> 1
+Contents (sorted): 5 5 10
+remove_key(5) -> 1
+Contents (sorted): 5 10
+update_key(10 -> 2) -> 1
+Contents (sorted): 2 5
+pop_max -> 5
+Contents (sorted): 2
+pop_min -> 2
+empty? true
+
+*/
+
 
 /* Union-Find Disjoint Sets (UFDS) */
 typedef vector<int> vi;
