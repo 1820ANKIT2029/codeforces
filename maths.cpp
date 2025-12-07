@@ -3,6 +3,23 @@ using namespace std;
 
 int MOD = 1e9 + 7;
 
+long long GCD(long long a, long long b) {
+    // recursive
+    if(b == 0) return a;
+    return GCD(b, a%b);
+
+    // iterative
+    /*
+    long long tmp;
+    while(b) {
+        tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    return a;
+    */
+}
+
 long long power(int x, int n){
     if(n == 0) return 1;
     long long ans = power(x, n / 2);
