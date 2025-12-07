@@ -20,6 +20,10 @@ long long GCD(long long a, long long b) {
     */
 }
 
+long long LCM(long long a, long long b) {
+    return a / GCD(a, b) * b;
+}
+
 long long power(int x, int n){
     if(n == 0) return 1;
     long long ans = power(x, n / 2);
@@ -52,4 +56,23 @@ long long nCr(int n, int r){
     long long deno = (fact(r) * fact(n-r)) % MOD;
 
     return (nume * power(deno, MOD-2)) % MOD;
+}
+
+
+/*
+    Extended Euclidean Algorithm
+    a*x + b*y = gcd(a, b);
+    a*s + b*t = gcd(a, b);
+*/
+int extEuclid(int a, int b, int &x, int &y) {      // pass x and y by ref
+    int xx = y = 0;
+    int yy = x = 1;
+    int q, t;
+    while (b) {                                    // repeats until b == 0
+        q = a / b;
+        t = b; b = a%b; a = t;                     // r
+        t = xx; xx = x-q*xx; x = t;                // s
+        t = yy; yy = y-q*yy; y = t;                // t
+    }
+    return a;                                      // returns gcd(a, b)
 }
