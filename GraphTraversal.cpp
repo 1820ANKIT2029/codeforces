@@ -141,7 +141,8 @@ bool isBipartite() {
 	return isBipartiteG;
 }
 
-// cycle detection
+// cycle detection in directed graph
+// cycle detectin in indirected graph, there is no need for visited, explored, unvisited state, just use (0/1 or black/white) state
 // change cycleCheck function according to need
 
 vector<int> dfs_parent;
