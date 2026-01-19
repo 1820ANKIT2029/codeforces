@@ -549,6 +549,583 @@ class _1671 {
 	}
 };
 
+class _1672 {
+	public:
+	void solve() {
+		int n, m, q;
+		cin >> n >> m >> q;
+		vector<vector<ll>> AM(n, vector<ll>(n, 1e15));
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;
+			AM[a-1][b-1] = min(AM[a-1][b-1], c);
+			AM[b-1][a-1] = min(AM[b-1][a-1], c);
+		}
+		for(int i=0; i<n; i++) AM[i][i] = 0;
+		
+		for(int k=0; k<n; k++)
+			for(int i=0; i<n; i++)
+				for(int j=0; j<n; j++)
+					AM[i][j] = min(AM[i][j], AM[i][k] + AM[k][j]);
+				
+		for(int i=0; i<q; i++) {
+			cin >> a >> b;
+			if(AM[a-1][b-1] == 1e15) cout << -1 << endl;
+			else cout << AM[a-1][b-1] << endl;
+		}
+	}
+};
+
+class _1673 {
+	public:
+	int n, m;
+	vector<vector<pli>> AL;
+	vector<ll> d;
+	vector<bool> visited;
+	
+	bool dfs(int u, int g) {
+		if(u == g) return true;
+		visited[u] = true;
+		
+		bool ans = false;
+		for(auto &[w, v]: AL[u]) {
+			if(visited[v]) continue;
+			ans = dfs(v, g);
+			if(ans) break;
+		}
+		
+		return ans;
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		d.assign(n, -1e15);
+		d[0] = 0;
+		for(int i=0; i<n-1; i++) {
+			bool ismodified = false;
+			for(int u=0; u<n; u++) {
+				if(d[u] != -1e15) {
+					for(auto [w, v]: AL[u]){
+						if(d[u] + w <= d[v]) continue;
+						
+						d[v] = d[u] + w;
+						ismodified = true;
+					}
+				}
+			}
+			
+			if(!ismodified) break;
+		}
+		
+		bool positiveCycle = false;
+		
+		//if(d[0] != 0) positiveCycle = true;
+		
+		for(int u=0; u<n; u++) {
+			if(positiveCycle) break;
+			
+			if(d[u] != -1e15){
+				for(auto &[w, v]: AL[u]){
+					
+					if(d[v] < d[u] + w){
+						visited.assign(n, false);
+						bool x = dfs(0, u);
+						visited.assign(n, false);
+						bool y = dfs(u, n-1);
+						if(x && y)
+							positiveCycle = true;
+					}
+				}
+			}
+		}	
+						
+		if(positiveCycle) cout << -1 << endl;
+		else cout << d[n-1] << endl;
+	}
+	
+};
+
+class _1195 {
+	public:
+	int n, m;
+	vector<vector<pli>> AL;
+	vector<ll> d, max_;
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		d.assign(n, 1e15); max_.assign(n, 1e15);
+		priority_queue<pli, vector<pli>, greater<pli>> pq;
+		pq.emplace(0, 0);
+		d[0] = 0; max_[0] = 0;
+		while(!pq.empty()) {
+			auto [dist, u] = pq.top(); pq.pop();
+			
+			if(dist > d[u]) continue;
+			
+			for(auto &[w, v]: AL[u]) {
+				if(d[u] + w < d[v]) {
+					d[v] = d[u] + w;
+					pq.emplace(d[v], v);
+				}
+			}
+		}
+		pq = priority_queue<pli, vector<pli>, greater<pli>>();
+		pq.emplace(0, 0);
+		while(!pq.empty()) {
+			auto [dist, u] = pq.top(); pq.pop();
+			
+			if(dist > max_[u]) continue;
+			
+			for(auto &[w, v]: AL[u]) {
+				if((max_[u] + w) < max_[v] || (d[u] + w / 2) < max_[v]) {
+					max_[v] = min(max_[u] + w, d[u] + w / 2);
+					pq.emplace(max_[v], v);
+				}
+			}
+		}
+		//cout << d[n-1] << " " << max_[n-1] << endl;
+		cout << max_[n-1] << endl;
+	}
+};
+
+class _1197 {
+	public:
+	int n, m;
+	vector<vector<pli>> AL;
+	vector<ll> d;
+	vector<int> p, path;
+	unordered_set<int> mp;
+	
+	void get_path(int u) {
+		path.push_back(u); mp.insert(u);
+		u = p[u];
+		while(mp.count(u) == 0){
+			path.push_back(u); mp.insert(u);
+			u = p[u];
+		}
+		path.push_back(u);
+		reverse(path.begin(), path.end());
+		while(path.back() != path[0]) path.pop_back();
+	}
+	
+	void components(int u) {
+		p[u] = 0;
+		for(auto &[w, v]: AL[u]) {
+			if(p[v] == -1) components(v);
+		}
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		if(n == 1 && m == 1) {
+			if(AL[0][0].first >= 0) cout << "NO" << endl;
+			else {
+				cout << "YES" << endl;
+				cout << "1 1" << endl;
+			}
+			return;
+		}
+		
+		d.assign(n, 1e15); p.assign(n, -1);
+		
+		for(int u=0; u<n; u++)
+			if(p[u] == -1) {
+				d[u] = 0;
+				components(u);
+			}
+			
+		p.assign(n, -1);
+		for(int i=0; i<n-1; i++) {
+			bool ismodified = false;
+			for(int u=0; u<n; u++) 
+				if(d[u] != 1e15) 
+					for(auto [w, v]: AL[u]){
+						if(d[u] + w >= d[v]) continue;
+						
+						d[v] = d[u] + w;
+						p[v] = u;
+						ismodified = true;
+					}
+			
+			if(!ismodified) break;
+		}
+		
+		bool negativeCycle = false;
+		
+		for(int u=0; u<n; u++) {
+			if(negativeCycle) break;
+			
+			if(d[u] != 1e15){
+				for(auto &[w, v]: AL[u]){
+					if(d[v] > d[u] + w){
+						negativeCycle = true;
+						get_path(u);
+						break;
+					}
+				}
+			}
+		}	
+						
+		if(negativeCycle) {
+			cout << "YES" << endl;
+			for(int x: path) cout << x + 1 << " ";
+			cout << endl;
+		}
+		else cout << "NO" << endl;
+	}
+};
+
+class _1196_ {
+	public:
+	int n, m, k;
+	vector<vector<pli>> AL;
+	vector<multiset<ll>> d;
+
+	bool canProcess(int w, int u) {
+		if(d[u].size() < k) return true;
+		if(*d[u].rbegin() >= w) return true;
+		return false;
+	}
+	
+	void insertDist(ll w, int u) {
+		if(d[u].size() < k) d[u].insert(w);
+		else {
+			d[u].erase(--d[u].end());
+			d[u].insert(w);
+		}
+	}
+	
+	void solve() {
+		cin >> n >> m >> k;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;  
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		priority_queue<pli, vector<pli>, greater<pli>> pq;
+		d.assign(n, multiset<ll>{1000000000000000LL});
+		
+		pq.emplace(0, 0);
+		d[0].insert(0);
+		while(!pq.empty()) {
+			auto [w, u] = pq.top(); pq.pop();
+			
+			if(!canProcess(w, u)) continue;
+			
+			for(auto &[w_, v]: AL[u]) {
+				
+				if(w + w_ < *d[v].rbegin()) {
+					insertDist(w + w_, v);
+					pq.emplace(w + w_, v);
+				}
+			}
+		}
+		
+		for(ll x: d[n-1]) cout << x << " ";
+		cout << endl;
+	}
+};
+
+class _1196 {
+	public:
+	int n, m, k;
+	vector<vector<pli>> AL;
+	vector<priority_queue<ll>> d;
+
+	bool canProcess(int w, int u) {
+		if(d[u].size() < k) return true;
+		if(d[u].top() >= w) return true;
+		return false;
+	}
+	
+	void insertDist(ll w, int u) {
+		if(d[u].size() < k) d[u].push(w);
+		else {
+			if(d[u].top() <= w) return;
+			d[u].pop();
+			d[u].push(w);
+		}
+	}
+	
+	void solve() {
+		cin >> n >> m >> k;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;  
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		priority_queue<pli, vector<pli>, greater<pli>> pq;
+		d.assign(n, priority_queue<ll>());
+		for(int i=0; i<n; i++) d[i].push(1e15);
+		
+		pq.emplace(0, 0);
+		insertDist(0, 0);
+		ll dist;
+		while(!pq.empty()) {
+			auto [w, u] = pq.top(); pq.pop();
+			
+			if(!canProcess(w, u)) continue;
+			
+			for(auto &[w_, v]: AL[u]) {
+				dist = w + w_;
+				if(dist < d[v].top()) {
+					insertDist(dist, v);
+					pq.emplace(dist, v);
+				}
+			}
+		}
+		
+		vector<ll> ans(k);
+		int ind = k - 1;
+		while(!d[n-1].empty()) {
+			ans[ind--] = d[n-1].top();
+			d[n-1].pop();
+		}
+		for(ll x: ans) cout << x << " ";
+		cout << endl;
+	}
+};
+
+class _1678 {
+	public:
+	int n, m;
+	vector<vector<int>> AL;
+	vector<int> p, path;
+	vector<char> c; // 0 -> unvisited, 1 -> explored, 2 -> visited
+	
+	pii dfs(int u) {	
+		c[u] = 1;
+		
+		pii tmp = {-1, -1};
+		for(int v: AL[u]) {
+			if(c[v] == 0) {
+				p[v] = u;
+				tmp = dfs(v);
+			}
+			else if (c[v] == 1) {
+				tmp = pii(v, u);
+			}
+			if(tmp.first != -1 && tmp.second != -1) break;
+		} 
+		
+		c[u] = 2;
+		return tmp;
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<int>());
+		int u, v;
+		for(int i=0; i<m; i++) {
+			cin >> u >> v;
+			AL[u-1].push_back(v-1);
+		}
+		
+		p.assign(n, -1);
+		c.assign(n, 0);	
+		pii tmp;
+		for(int i=0; i<n; i++) {
+			if(c[i] != 0) continue;
+			tmp = dfs(i);
+			if(tmp.first != -1 && tmp.second != -1) break;
+		}
+		
+		u = tmp.first;
+		v = tmp.second;
+		
+		if(u == -1 && v == -1) {
+			cout << "IMPOSSIBLE" << endl;
+			return;
+		}
+		
+		path.push_back(u+1);
+		while(v != u) {
+			path.push_back(v+1);
+			v = p[v];
+		}
+		path.push_back(u+1);
+		reverse(path.begin(), path.end());
+		
+		cout << path.size() << endl;
+		for(int x: path) cout << x << " ";
+		cout << endl;
+	}
+};
+
+class _1679 {
+	public:
+	int n, m;
+	vector<vector<int>> AL;
+	vector<char> c;
+	vector<int> path;
+	int ind;
+	
+	bool topologicalsort(int u) {
+		c[u] = 1;
+		bool possible = true;
+		
+		for(int v: AL[u]){
+			if(c[v] == 0) possible = topologicalsort(v);
+			else if (c[v] == 1) possible = false;
+			
+			if(!possible) break;
+		}
+		c[u] = 2;
+		path[ind++] = u;
+		return possible;
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<int>());
+		int u, v;
+		for(int i=0; i<m; i++) {
+			cin >> u >> v;
+			AL[u-1].push_back(v-1);
+		}
+		
+		c.assign(n, 0);
+		path.assign(n, -1); ind = 0;
+		bool possible = true;
+		for(int u=0; u<n; u++) {
+			if(c[u] != 0) continue;
+			possible = topologicalsort(u);
+			if(!possible) break;
+		}
+		
+		if(!possible) {
+			cout << "IMPOSSIBLE" << endl;
+			return;
+		}
+		
+		reverse(path.begin(), path.end());
+		for(int x: path) cout << x + 1 << " ";
+		cout << endl;
+	}
+};
+
+class _1680 {
+	public:
+	int n, m;
+	vector<vector<int>> AL;
+	vector<int> d, p;
+	bool exist;
+	
+	int dfs(int u) {
+		if(u == n-1) {exist = true; return 1;}
+		if(d[u] != -1) return d[u];
+		
+		int max_ = 0, node = -1;
+		for(int v: AL[u]) {
+			int tmp = dfs(v);
+			if(tmp == 0) continue;
+			tmp++;
+			if(tmp > max_) {
+				node = v;
+				max_ = tmp;
+			}
+		}
+		p[u] = node;
+		return d[u] = max_;
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<int>());
+		int a, b;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b;
+			AL[a-1].push_back(b-1);
+		}
+		
+		d.assign(n, -1); p.assign(n, -1);
+		exist = false;
+		dfs(0);
+		
+		if(!exist) {
+			cout << "IMPOSSIBLE" << endl;
+			return;
+		}
+	
+		cout << d[0] << endl;
+		a = 0;
+		while(a != n-1) {
+			cout << a + 1 << " ";
+			a = p[a];
+		}
+		cout << n << " ";
+		cout << endl;
+	}
+};
+
+class _1681 {
+	public:
+	const ll MOD = 1e9 + 7;
+	int n, m;
+	vector<vector<int>> AL;
+	vector<ll> dp;
+	
+	ll dfs(int u) {
+		if(u >= n) return 0;
+		if(dp[u] != -1) return dp[u];
+		
+		ll ans = 0;
+		for(int v: AL[u]) {
+			ans += dfs(v);
+			ans %= MOD;
+		}
+		
+		return dp[u] = ans;
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<int>());
+		int a, b;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b;
+			AL[a-1].push_back(b-1);
+		}
+		
+		dp.assign(n, -1);
+		dp[n-1] = 1;
+		dfs(0);
+		
+		cout << dp[0] << endl;
+	}
+};
+
 /* templete
 class _QuesNum {
 	public:
