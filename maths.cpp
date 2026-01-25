@@ -118,9 +118,9 @@ void sieve(long long upperbound) {
     bs.set();
     bs[0] = bs[1] = 0;
 
-    for(int i=2; i<sieve_size; i++) {
+    for(long long i=2; i<sieve_size; i++) {
         if(bs[i]) {
-            for(int j=i*i; j<sieve_size; j+=i) bs[j] = 0;
+            for(long long j=i*i; j<sieve_size; j+=i) bs[j] = 0;
             prime.push_back(i);
         }
     }
@@ -142,7 +142,7 @@ vector<long long> primeFactor(long long n) {
     int m = prime.size();
     for(int i=0; i<m && (prime[i]*prime[i] <= n); i++) {
         while(n % prime[i] == 0) {
-            N /= prime[i];
+            n /= prime[i];
             factors.push_back(prime[i]);
         }
     }
@@ -150,3 +150,18 @@ vector<long long> primeFactor(long long n) {
     if(n != 1) factors.push_back(n);
     return factors;
 }
+
+long long CountDivisors(long long n) {
+		int m = prime.size();
+		long long ans = 1, cnt;
+		for(int i=0; i<m && (prime[i]*prime[i] <= n); i++) {
+			cnt = 0;
+			while(n % prime[i] == 0) {
+				n /= prime[i]; cnt++;
+			}
+			ans *= (cnt + 1);
+		}
+
+		if(n != 1) ans *= 2;
+		return ans;
+	}
