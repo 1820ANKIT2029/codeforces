@@ -1126,6 +1126,95 @@ class _1681 {
 	}
 };
 
+class _1202 {
+	public:
+	const ll MOD = 1e9 + 7;
+	int n, m;
+	vector<vector<pli>> AL;
+	vector<ll> dist, dp, max_, min_;
+	
+	void dijkstra(int x) {
+		dist.assign(n, 1e15); dp.assign(n, 0); min_.assign(n, 0); max_.assign(n, 0);
+		
+		priority_queue<pli, vector<pli>, greater<pli>> pq;
+		pq.emplace(0, x);
+		dist[x] = 0; dp[x] = 1;
+		ll tmp;
+		while(!pq.empty()) {
+			auto [w, u] = pq.top(); pq.pop();
+			
+			if(w > dist[u]) continue;
+			
+			for(auto &[w_, v]: AL[u]) {
+				tmp = w + w_;
+				if(tmp == dist[v]) {
+					dp[v] = (dp[v] + dp[u]) % MOD;
+					min_[v] = min(min_[v], min_[u] + 1);
+					max_[v] = max(max_[v], max_[u] + 1);
+					continue;
+				}
+				if(tmp < dist[v]) {
+					dist[v] = tmp;
+					pq.emplace(dist[v], v);
+					dp[v] = dp[u];
+					min_[v] = min_[u] + 1;
+					max_[v] = max_[u] + 1;
+				}
+			}
+		}
+	}
+	
+	void solve() {
+		cin >> n >> m;
+		AL.assign(n, vector<pli>());
+		int a, b;
+		ll c;
+		for(int i=0; i<m; i++) {
+			cin >> a >> b >> c;
+			AL[a-1].emplace_back(c, b-1);
+		}
+		
+		dijkstra(0);
+		
+		cout << dist[n-1] << " " << dp[n-1] << " " << min_[n-1] << " " << max_[n-1] << endl;
+		
+	}
+};
+
+class _1750 {
+	public:
+	int n, q;
+	vector<int> p;
+	vector<vector<int>> dp;
+	
+	void solve() {
+		ios_base::sync_with_stdio(false);
+		cin.tie(NULL);
+		cin >> n >> q;
+		dp.assign(30, vector<int>(n+1, -1));
+		int tmp;
+		for(int i=1; i<=n; i++) { 
+			cin >> dp[0][i];
+		}
+		for(int i=1; i<30; i++) {
+			for(int j=1; j<=n; j++) {
+				dp[i][j] = dp[i-1][dp[i-1][j]];
+			}
+		}
+		
+		int a, b;
+		for(int i=0; i<q; i++) {
+			cin >> a >> b;
+			
+			for(int j=0; j<30; j++) {
+				if(b & (1<<j)) a = dp[j][a];
+			}
+			
+			cout << a << '\n';
+		}
+	}
+};
+
 /* templete
 class _QuesNum {
 	public:
