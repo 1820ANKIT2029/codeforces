@@ -739,6 +739,217 @@ class _1093 {
 	}
 };
 
+class _3314 {  // dp + monotonic stack (next larger number)
+	public:
+	int n;
+	vector<int> h;
+	vector<int> L, R, indices, dp;
+	
+	void solve() {
+		FAST_IO;
+		cin >> n;
+		h.resize(n);
+		for(int &i: h) cin >> i;
+		
+		L.assign(n, -1);
+		R.assign(n, -1);
+		stack<int> st;
+		
+		for(int i=0; i<n; i++) {
+			while(!st.empty() && h[st.top()] <= h[i]) st.pop();
+			if(!st.empty()) L[i] = st.top();
+			st.push(i);
+		}
+		
+		while(!st.empty()) st.pop();
+		
+		for (int i = n - 1; i >= 0; i--) {
+			while (!st.empty() && h[st.top()] <= h[i]) st.pop();
+			if (!st.empty()) R[i] = st.top();
+			st.push(i);
+		}
+		
+		/*
+		for(int X: L) cout << X << " ";
+		cout << endl;
+		for(int X: R) cout << X << " ";
+		cout << endl;
+		*/
+		
+		indices.resize(n);
+		for (int i = 0; i < n; i++) indices[i] = i;
+		sort(indices.begin(), indices.end(), [&](int a, int b) {
+			return h[a] > h[b];
+		});
+		
+		dp.assign(n, 1);
+		int max_mountains = 0;
+
+		for (int i : indices) {
+			int best_prev = 0;
+			if (L[i] != -1) best_prev = max(best_prev, dp[L[i]]);
+			if (R[i] != -1) best_prev = max(best_prev, dp[R[i]]);
+			
+			dp[i] = 1 + best_prev;
+			max_mountains = max(max_mountains, dp[i]);
+		}
+
+		cout << max_mountains << endl;
+	}
+};
+
+class _1145 {
+	public:
+	int n;
+	vector<int> nums;
+	
+	int LIS() {  // DP approach
+		if (n == 0) return 0;
+		
+		vector<int> dp(n, 1);
+		int maxLength = 1;
+
+		for (int i = 1; i < n; i++) {
+			for (int j = 0; j < i; j++) {
+				if (nums[j] < nums[i]) {
+					dp[i] = max(dp[i], dp[j] + 1);
+				}
+			}
+			maxLength = max(maxLength, dp[i]);
+		}
+		return maxLength;
+	}
+	
+	int LIS_Optimal() { // Binary search approach
+		if (n == 0) return 0;
+
+		vector<int> tails;
+		for (int x : nums) {
+			auto it = lower_bound(tails.begin(), tails.end(), x);
+			
+			if (it == tails.end()) 
+				tails.push_back(x);
+			else 
+				*it = x;
+		}
+		return tails.size();
+	}
+	
+	void solve() {
+		FAST_IO;
+		cin >> n;
+		nums.resize(n);
+		
+		for(int &i: nums) cin >> i;
+		
+		cout << LIS_Optimal() << endl;
+	}
+};
+
+class _1140 { // Weighted Interval Scheduling problem
+	public:
+	int n;
+	vector<vector<ll>> proj;
+	
+	ll Tabu() { // n^2 -> TLE
+		sort(proj.begin(), proj.end(), [](vector<ll> &a, vector<ll> &b) {
+			if(a[0] == b[0]) return a[1] < b[1];
+			return a[0] < b[0];
+		});
+		
+		vector<ll> dp(n+1, 0);
+		
+		ll max_ = -1;
+		for(int i=0; i<n; i++) {
+			dp[i] = proj[i][2];
+			for(int j=i-1; j>=0; j--) {
+				if(proj[j][1] >= proj[i][0]) continue;
+
+				dp[i] = max(dp[i], dp[j] + proj[i][2]);
+			}
+			
+			max_ = max(max_, dp[i]);
+		}
+		
+		return max_;
+	}
+	
+	ll Tabu_optimal() {
+		sort(proj.begin(), proj.end(), [](vector<ll> &a, vector<ll> &b) {
+			return a[1] < b[1];
+		});
+		
+		vector<ll> dp(n+1, 0), endTime(n);
+		for(int i=0; i<n; i++) endTime[i] = proj[i][1];
+		
+		for(int i=1; i<=n; i++) {
+			auto it = lower_bound(endTime.begin(), endTime.end(), proj[i-1][0]);
+			int j = distance(endTime.begin(), it); // 0-index, so no need to j-1
+			
+			dp[i] = max(dp[i-1], dp[j] + proj[i-1][2]);
+			
+		}
+		
+		return dp[n];
+	}
+	
+	void solve() {
+		FAST_IO;
+		cin >> n;
+		proj.assign(n, vector<ll>(3, 0));
+		
+		for(vector<ll> &v: proj)
+			for(ll &i: v) 
+				cin >> i;
+		
+		cout << Tabu_optimal() << endl;
+	}
+};
+
+class _1653 {
+	public:
+	int n, x;
+	vector<int> w;
+	
+	int Tabu() {
+		// dp[mask] = {min_rides, min_weight_of_last_ride}
+		vector<pair<int, int>> dp(1 << n);
+		
+		dp[0] = {1, 0}; // 1 ride started with 0 weight
+		for (int mask = 1; mask < (1 << n); mask++) {
+			dp[mask] = {n + 1, 0};
+
+			for (int i = 0; i < n; i++) {
+				if (mask & (1 << i)) {
+					pair<int, int> prev = dp[mask ^ (1 << i)];
+					pair<int, int> current;
+
+					if (prev.second + w[i] <= x)
+						current = {prev.first, prev.second + w[i]};
+					else
+						current = {prev.first + 1, w[i]};
+					
+					// Keep the lexicographically smallest pair
+					if (current < dp[mask])
+						dp[mask] = current;
+				}
+			}
+		}
+		
+		return dp[(1 << n) - 1].first;
+	}
+	
+	void solve() {
+		FAST_IO;
+		cin >> n >> x;
+		w.resize(n);
+		for(int &i: w) cin >> i;
+		
+		cout << Tabu() << endl;
+	}
+};
+
+
 /* templete
 class _QuesNum {
 	public:
