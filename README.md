@@ -1,10 +1,10 @@
-# 🤖 **My `codeforces` solutions**
+# 🤖 **My `CP` solutions and templates**
 
 ```c++
 #include <iostream>
 using namespace std;
 
 int main(){
-  cout << "Codeforces Questions Done!!!";
+  cout << "CP Questions Done!!!";
 }
 ```
