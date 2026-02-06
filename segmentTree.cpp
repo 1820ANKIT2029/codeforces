@@ -425,6 +425,7 @@ public:
 class segmentTreeAddSeg {
     /*
         Segment tree Addition to segment
+        Range Updata Point Query segment tree
     */
 
     vl operations;
@@ -439,29 +440,6 @@ class segmentTreeAddSeg {
         int mid = L + ((R-L)>>1);
         build(Left(p), L, mid, a);
         build(Right(p), mid+1, R, a);
-
-        operations[p] = operations[Left(p)] + operations[Right(p)];
-    }
-
-    void set(int p, int L, int R, int ind, int v){
-        if(L == R) {operations[p] = v; return;}
-
-        int mid = L + ((R-L)>>1);
-        if(ind <= mid) set(Left(p), L, mid, ind, v);
-        else set(Right(p), mid+1, R, ind, v);
-
-        operations[p] = operations[Left(p)] + operations[Right(p)];
-    }
-
-    long long rangeSum(int p, int L, int R, int l, int r){
-        // 3 case -> to get sum
-        if(L >= l && R<=r) return operations[p];        // case 1: bounded
-        if(R < l || L > r) return 0;             // case 2: unbound
-
-        int mid = L + ((R-L)>>1);
-
-        // case 3: some portion bounded and some unbound
-        return rangeSum(Left(p), L, mid, l, r) + rangeSum(Right(p), mid+1, R, l, r);
     }
 
     void add(int p, int L, int R, int l, int r, int v){
@@ -498,8 +476,6 @@ public:
         build(0, 0, size-1, a);
     }
 
-    void set(int ind, int v){ set(0, 0, size-1, ind, v); }
-    long long rangeSum(int l, int r){ return rangeSum(0, 0, size-1, l, r);}
     void add(int l, int r, int v){ add(0, 0, size-1, l, r, v);}
     ll get(int i) {return get(0, 0, size-1, i);}
 };
@@ -714,4 +690,5 @@ public:
 
     void modify(int l, int r, int v){modify(0, 0, size-1, l, r, v);}
     ll query(int l, int r){return query(0, 0, size-1, l, r);}
+
 };
