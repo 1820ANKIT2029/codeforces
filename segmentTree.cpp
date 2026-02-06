@@ -522,6 +522,21 @@ public:
     ll rangeMin(int l, int r){return rangeMin(0, 0, size-1, l, r);}
 };
 
+int main(){
+    segmentTreeRURM st(8);
+
+    // add +5 to range [2, 6]
+    st.add(2, 6, 5);
+
+    // add -3 to range [4, 7]
+    st.add(4, 7, -3);
+
+    cout << st.rangeMin(0, 7) << '\n'; // expected: 0
+    cout << st.rangeMin(2, 3) << '\n'; // expected: 5
+    cout << st.rangeMin(4, 6) << '\n'; // expected: 2
+    cout << st.rangeMin(7, 7) << '\n'; // expected: -3
+}
+
 class segmentTreeRURQ {
     /*
         Segment Tree Range Update Range Query
@@ -692,3 +707,4 @@ public:
     ll query(int l, int r){return query(0, 0, size-1, l, r);}
 
 };
+
