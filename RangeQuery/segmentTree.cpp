@@ -46,10 +46,34 @@ class segmentTreeSum {
         sum[p] = sum[Left(p)] + sum[Right(p)];
     }
 
+    /*
+    L, R, l, r
+
+    case 1: bounded 
+        l                 r
+        |-----------------|
+           |--------------|
+           L              R
+    case 2: unbounded
+        l                 r
+        |-----------------|
+                            |------|
+                            L      R
+        OR
+                  l                 r
+                  |-----------------|
+        |------|
+        L      R
+    case 3: some bounded and some unbounded
+                l             r
+                |-------------|
+        |-----------------------|
+        L                       R
+    */
     long long rangeSum(int p, int L, int R, int l, int r){
         // 3 case -> to get sum
-        if(L >= l && R<=r) return sum[p];        // case 1: bounded
-        if(R < l || L > r) return 0;             // case 2: unbound
+        if(L>=l && R<=r) return sum[p];        // case 1: bounded
+        if(R < l || L > r) return 0;           // case 2: unbound
 
         int mid = L + ((R-L)>>1);
 
@@ -318,13 +342,10 @@ public:
 
 class segmentTreeKthOne {
     /*
-    segment Tree Minimum and Minimum count version
+    segment Tree Kth one
     */
 public:
     typedef int item;
-    // struct item {
-    //     int m, c;
-    // };
 
 private:
     int size;
@@ -389,7 +410,6 @@ private:
         int sl = values[Left(p)];
         if(k < sl) return find(Left(p), L, mid, k);
         return find(Right(p), mid+1, R, k - sl);
-
     }
 
 public:
@@ -425,7 +445,7 @@ public:
 class segmentTreeAddSeg {
     /*
         Segment tree Addition to segment
-        Range Updata Point Query segment tree
+        Range Update Point Query segment tree
     */
 
     vl operations;
@@ -478,6 +498,109 @@ public:
 
     void add(int l, int r, int v){ add(0, 0, size-1, l, r, v);}
     ll get(int i) {return get(0, 0, size-1, i);}
+};
+
+class segmentTreeAtLeastX {
+    vl tree;
+    int size;
+ 
+    void build(int p, int L, int R, vl& a){
+        if(L == R){
+            if(L < (int)a.size()) tree[p] = a[L]; 
+            return;
+        }
+ 
+        int mid = L + ((R-L)>>1);
+        build(Left(p), L, mid, a);
+        build(Right(p), mid+1, R, a);
+ 
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+    }
+ 
+    void pointUpdate(int p, int L, int R, int idx, int v){
+        if(L == R){tree[p] = v; return;}
+ 
+        int mid = L + ((R-L)>>1);
+        if(idx <= mid) pointUpdate(Left(p), L, mid, idx, v);
+        else pointUpdate(Right(p), mid+1, R, idx, v);
+ 
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+    }
+ 
+    int find(int p, int L, int R, ll v){
+        if(tree[p] < v) return -1;
+        if(L == R) return L;
+ 
+        int mid = L + ((R-L)>>1);
+        if(v <= tree[Left(p)]) return find(Left(p), L, mid, v);
+        else return find(Right(p), mid+1, R, v);
+    }
+ 
+public:
+    segmentTreeAtLeastX(vl &a){
+        int n = a.size();
+        size = 1;
+        while(size < n) size *= 2;
+        tree.assign(2*size, INT64_MIN);
+        build(0, 0, size-1, a);
+    }
+ 
+    void pointUpdate(int idx, ll v){ pointUpdate(0, 0, size-1, idx, v);}
+    int find(ll x) {return find(0, 0, size-1, x);}
+};
+
+class segmentTreeAtLeastXAndJGreaterL {
+    vl tree;
+    int size;
+
+    void build(int p, int L, int R, vl& a){
+        if(L == R){
+            if(L < (int)a.size()) tree[p] = a[L]; 
+            return;
+        }
+
+        int mid = L + ((R-L)>>1);
+        build(Left(p), L, mid, a);
+        build(Right(p), mid+1, R, a);
+
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+    }
+
+    void pointUpdate(int p, int L, int R, int idx, int v){
+        if(L == R){tree[p] = v; return;}
+
+        int mid = L + ((R-L)>>1);
+        if(idx <= mid) pointUpdate(Left(p), L, mid, idx, v);
+        else pointUpdate(Right(p), mid+1, R, idx, v);
+
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+    }
+
+    int find(int p, int L, int R, ll x, int l){
+        if(R < l || tree[p] < x) return -1;
+
+        if(L == R) return L;
+
+        int mid = L + ((R - L) >> 1);
+
+        int res = find(Left(p), L, mid, x, l);
+        if(res != -1) return res;
+
+        return find(Right(p), mid+1, R, x, l);
+    }
+
+
+public:
+    segmentTreeAtLeastX(vl &a){
+        int n = a.size();
+        size = 1;
+        while(size < n) size *= 2;
+        tree.assign(2*size, INT64_MIN);
+        build(0, 0, size-1, a);
+    }
+
+    void pointUpdate(int idx, ll v){ pointUpdate(0, 0, size-1, idx, v);}
+    int find(ll x, int l) {return find(0, 0, size-1, x, l);}
 };
 
 class segmentTreeRURM {

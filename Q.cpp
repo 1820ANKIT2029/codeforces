@@ -15,8 +15,8 @@ using namespace std;
 #define srt(v) sort((v).begin(), (v).end())
 #define srtR(v) sort(v.rbegin(), v.rend())
 
-#define Left(p)     (p<<1)+1
-#define Right(p)    (p<<1)+2
+#define Left(p)     ((p)<<1)+1
+#define Right(p)    ((p)<<1)+2
 
 typedef long long ll;
 typedef unsigned long long ull;
@@ -44,119 +44,85 @@ const int PrimeSize = 100001;
 //     return (a.second - a.first)> (b.second - b.first);
 // }
 
-#define Left(p)     (p<<1)+1
-#define Right(p)    (p<<1)+2
-
-class segmentTreeRURQLazy {
-    /*
-        Segment Tree Range Update Range Query Lazy Propagation
-    */
-
+class segmentTreeAtLeastXAndJGreaterL {
+    vl tree;
     int size;
-    vl operations, values;
 
-    ll NEUTRAL_ELEMENT = LLONG_MAX;
-    ll NO_OPERATION = LLONG_MAX - 1;
-
-    ll modify_op(ll a, ll b){
-        if(b == NO_OPERATION) return a;
-        return b;
-    }
-
-    ll query_op(ll a, ll b){
-        return min(a, b);
-    }
-
-    void apply_mod_op(ll &a, ll b){
-        a = modify_op(a, b);
-    }
-
-    void propagate(int p, int L, int R){
-        if(L == R) return;
-
-        int mid = L +  ((R-L)>>1);
-        apply_mod_op(operations[Left(p)], operations[p]);
-        apply_mod_op(values[Left(p)], operations[p]);
-        apply_mod_op(operations[Right(p)], operations[p]);
-        apply_mod_op(values[Right(p)], operations[p]);
-        operations[p] = NO_OPERATION;
-    }
-
-    void modify(int p, int L, int R, int l, int r, int val){
-        propagate(p, L, R);
-        if(L > r || R < l) return;
-        if(L >= l && R<=r){
-            apply_mod_op(operations[p], val);
-            apply_mod_op(values[p], val);
+    void build(int p, int L, int R, vl& a){
+        if(L == R){
+            if(L < (int)a.size()) tree[p] = a[L]; 
             return;
         }
 
         int mid = L + ((R-L)>>1);
-        modify(Left(p), L, mid, l, r, val);
-        modify(Right(p), mid+1, R, l, r, val);
+        build(Left(p), L, mid, a);
+        build(Right(p), mid+1, R, a);
 
-        values[p] = query_op(values[Left(p)], values[Right(p)]);
-        apply_mod_op(values[p], operations[p]);
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
     }
 
-    ll query(int p, int L, int R, int l, int r){
-        propagate(p, L, R);
-        if(L > r || R < l) return NEUTRAL_ELEMENT;
-        if(L >= l && R<=r) return values[p];
+    void pointUpdate(int p, int L, int R, int idx, int v){
+        if(L == R){tree[p] = v; return;}
 
         int mid = L + ((R-L)>>1);
-        ll a = query(Left(p), L, mid, l, r);
-        ll b = query(Right(p), mid+1, R, l, r);
-        ll ans = query_op(a, b);
-        apply_mod_op(ans, operations[p]);
-        return ans;
+        if(idx <= mid) pointUpdate(Left(p), L, mid, idx, v);
+        else pointUpdate(Right(p), mid+1, R, idx, v);
+
+        tree[p] = max(tree[Left(p)], tree[Right(p)]);
     }
 
-    // void build(int p, int L, int R){
-    //     if(L == R) {values[p] = 1; return;}
+    int find(int p, int L, int R, ll x, int l){
+        if(R < l || tree[p] < x) return -1;
 
-    //     int mid = L + ((R-L)>>1);
-    //     build(Left(p), L, mid);
-    //     build(Right(p), mid+1, R);
+        if(L == R) return L;
 
-    //     values[p] = query_op(values[Left(p)], values[Right(p)]);
-    // }
+        int mid = L + ((R - L) >> 1);
+
+        int res = find(Left(p), L, mid, x, l);
+        if(res != -1) return res;
+
+        return find(Right(p), mid+1, R, x, l);
+    }
+
 
 public:
-    segmentTreeRURQLazy(int n){
+    segmentTreeAtLeastX(vl &a){
+        int n = a.size();
         size = 1;
         while(size < n) size *= 2;
-        operations.assign(2 * size, 0LL);
-        values.assign(2 * size, 0LL);
-        // build(0, 0, size-1);
+        tree.assign(2*size, INT64_MIN);
+        build(0, 0, size-1, a);
     }
 
-    void modify(int l, int r, int v){modify(0, 0, size-1, l, r, v);}
-    ll query(int l, int r){return query(0, 0, size-1, l, r);}
+    void pointUpdate(int idx, ll v){ pointUpdate(0, 0, size-1, idx, v);}
+    int find(ll x, int l) {return find(0, 0, size-1, x, l);}
 };
+
 
 void solve(){
 	int n, m;
     cin >> n >> m;
+    vl a(n);
+    for(ll &i: a) cin >> i;
 
-    segmentTreeRURQLazy st(n);
+    segmentTreeAtLeastX st(a);
 
-    int q, l, r, v, ind;
-    for(i, 0, m){
-        cin >> q;
-        if(q == 1){
-            cin >> l >> r >> v;
-            st.modify(l, r-1, v);
+    int type, i, v, l; ll x;
+    while(m--){
+        cin >> type;
+        if(type == 1){
+            cin >> i >> v;
+            st.pointUpdate(i, v);
         }
         else{
-            cin >> l >> r;
-            cout << st.query(l, r-1) << endl;
+            cin >> x >> l;
+            cout << st.find(x, l) << endl;
         }
     }
     
 }
 
-main(){
+int main(){
 	ios::sync_with_stdio(0);
     ll t;
 
