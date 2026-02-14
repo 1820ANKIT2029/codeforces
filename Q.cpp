@@ -44,13 +44,13 @@ const int PrimeSize = 100001;
 //     return (a.second - a.first)> (b.second - b.first);
 // }
 
-class segmentTreeAtLeastXAndJGreaterL {
-    vl tree;
+class segmentTreeSum {
+    vl sum;
     int size;
 
     void build(int p, int L, int R, vl& a){
         if(L == R){
-            if(L < (int)a.size()) tree[p] = a[L]; 
+            if(L < (int)a.size()) sum[p] = a[L]; 
             return;
         }
 
@@ -58,67 +58,57 @@ class segmentTreeAtLeastXAndJGreaterL {
         build(Left(p), L, mid, a);
         build(Right(p), mid+1, R, a);
 
-        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+        sum[p] = sum[Left(p)] + sum[Right(p)];
     }
 
-    void pointUpdate(int p, int L, int R, int idx, int v){
-        if(L == R){tree[p] = v; return;}
+    void set(int p, int L, int R, int ind, int v){
+        if(L == R) {sum[p] += v; return;}
 
         int mid = L + ((R-L)>>1);
-        if(idx <= mid) pointUpdate(Left(p), L, mid, idx, v);
-        else pointUpdate(Right(p), mid+1, R, idx, v);
+        if(ind <= mid) set(Left(p), L, mid, ind, v);
+        else set(Right(p), mid+1, R, ind, v);
 
-        tree[p] = max(tree[Left(p)], tree[Right(p)]);
+        sum[p] = sum[Left(p)] + sum[Right(p)];
     }
 
-    int find(int p, int L, int R, ll x, int l){
-        if(R < l || tree[p] < x) return -1;
+    long long rangeSum(int p, int L, int R, int l, int r){
+        if(L>=l && R<=r) return sum[p];      
+        if(R < l || L > r) return 0;    
 
-        if(L == R) return L;
+        int mid = L + ((R-L)>>1);
 
-        int mid = L + ((R - L) >> 1);
-
-        int res = find(Left(p), L, mid, x, l);
-        if(res != -1) return res;
-
-        return find(Right(p), mid+1, R, x, l);
+        return rangeSum(Left(p), L, mid, l, r) + rangeSum(Right(p), mid+1, R, l, r);
     }
-
 
 public:
-    segmentTreeAtLeastX(vl &a){
-        int n = a.size();
+    segmentTreeSum(int n){
         size = 1;
         while(size < n) size *= 2;
-        tree.assign(2*size, INT64_MIN);
+        sum.assign(2*size, 0LL);
+    }
+
+    segmentTreeSum(vl& a) : segmentTreeSum((int)a.size()) {
         build(0, 0, size-1, a);
     }
 
-    void pointUpdate(int idx, ll v){ pointUpdate(0, 0, size-1, idx, v);}
-    int find(ll x, int l) {return find(0, 0, size-1, x, l);}
+    void set(int ind, int v){ set(0, 0, size-1, ind, v); }
+    long long rangeSum(int l, int r){ return rangeSum(0, 0, size-1, l, r);}
 };
 
 
 void solve(){
 	int n, m;
-    cin >> n >> m;
+    cin >> n;
     vl a(n);
     for(ll &i: a) cin >> i;
 
-    segmentTreeAtLeastX st(a);
+    segmentTreeSum st(n);
 
-    int type, i, v, l; ll x;
-    while(m--){
-        cin >> type;
-        if(type == 1){
-            cin >> i >> v;
-            st.pointUpdate(i, v);
-        }
-        else{
-            cin >> x >> l;
-            cout << st.find(x, l) << endl;
-        }
+    for(int i=0; i<n; i++) {
+        cout << st.rangeSum(0, n-1) - st.rangeSum(0, a[i]-1) << " ";
+        st.set(a[i]-1, 1);
     }
+    cout << "\n";
     
 }
 
