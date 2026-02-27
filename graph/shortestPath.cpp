@@ -181,3 +181,127 @@ void printPath(int i, int j) {
 	if (i != j) printPath(i, p[i][j]);
 	printf(" %d", v);
 }
+
+/*
+Johnson’s Algorithm: All-Pairs Shortest Path (APSP) problem in sparse, 
+	directed graphs that may contain negative edge weights.
+
+	O(V^2 log V + V E)
+
+	How it Works (The Reweighting Technique)
+	1. Add a Dummy Vertex (q) with weight 0
+	2. Bellman-Ford on Vertex q, finds the shortest path h[v] from q to every other vertex v
+	3. Reweight Edges: w'(u, v) = w(u, v) + h[u] - h[v]
+	4. Dijkstra’s Algorithm: Run Dijkstra’s algorithm from every vertex u using the new 
+		non-negative weights w' to find the reweighted shortest paths d'(u, v).
+	5. Restore Distances: d(u, v) = d'(u, v) - h[u] + h[v]
+	
+*/
+
+bool bellman_ford(int V, const vector<vector<int>>& edges, vector<int>& h) {
+    h.assign(V, 0);
+
+    // Relax all edges V - 1 times
+    for (int i = 0; i < V - 1; i++) {
+        for (const auto& edge : edges) {
+            int u = edge[0];
+            int v = edge[1];
+            int weight = edge[2];
+            
+            if (h[u] != INF && h[u] + weight < h[v]) {
+                h[v] = h[u] + weight;
+            }
+        }
+    }
+
+    // pass to check for negative-weight cycles
+    for (const auto& edge : edges) {
+        int u = edge[0];
+        int v = edge[1];
+        int weight = edge[2];
+        
+        if (h[u] != INF && h[u] + weight < h[v]) {
+            return false; // Negative cycle detected
+        }
+    }
+    return true;
+}
+
+void dijkstra(int src, int V, const vector<vector<pair<int, int>>>& adj, vector<int>& dist) {
+    dist.assign(V, INF);
+    dist[src] = 0;
+    
+    // Min-heap priority queue: stores {distance, vertex}
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        int d = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+		
+        if (d > dist[u]) continue;
+
+        for (const auto& edge : adj[u]) {
+            int v = edge.first;
+            int weight = edge.second;
+
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+
+// Main function to orchestrate Johnson's Algorithm
+void johnson_apsp(int V, const vector<vector<int>>& edges) {
+    vector<int> h;
+
+    // Step 1 & 2: Get potentials using Bellman-Ford
+    if (!bellman_ford(V, edges, h)) {
+        cout << "Graph contains a negative weight cycle. APSP is undefined.\n";
+        return;
+    }
+
+    // Step 3: Create an adjacency list with reweighted, non-negative edges
+    vector<vector<pair<int, int>>> adj(V);
+    for (const auto& edge : edges) {
+        int u = edge[0];
+        int v = edge[1];
+        int weight = edge[2];
+        
+        // Formula: w'(u, v) = w(u, v) + h[u] - h[v]
+        int reweighted = weight + h[u] - h[v];
+        adj[u].push_back({v, reweighted});
+    }
+
+    vector<vector<int>> shortest_paths(V, vector<int>(V, INF));
+
+    // Step 4: Run Dijkstra from every vertex
+    for (int u = 0; u < V; u++) {
+        vector<int> dist;
+        dijkstra(u, V, adj, dist);
+
+        // Step 5: Undo the reweighting to get the original shortest path distances
+        for (int v = 0; v < V; v++) {
+            if (dist[v] != INF) {
+                // Formula: d(u, v) = d'(u, v) - h[u] + h[v]
+                shortest_paths[u][v] = dist[v] - h[u] + h[v];
+            }
+        }
+    }
+
+    // Output the resulting All-Pairs Shortest Path matrix
+    cout << "All-Pairs Shortest Path Matrix:\n";
+    for (int u = 0; u < V; u++) {
+        for (int v = 0; v < V; v++) {
+            if (shortest_paths[u][v] == INF) {
+                cout << "INF\t";
+            } else {
+                cout << shortest_paths[u][v] << "\t";
+            }
+        }
+        cout << "\n";
+    }
+}
