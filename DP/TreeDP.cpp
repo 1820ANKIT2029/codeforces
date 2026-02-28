@@ -1,0 +1,480 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+/*
+    Binary Lifting: Jump in powers of two
+    LCA (Lowest Common Ancestor): Given u and v → find lowest common parent.
+        Fast Methods
+            - Binary lifting
+            - Euler tour + RMQ
+            - HLD
+*/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 20;
+
+vector<int> adj[MAXN];
+int up[MAXN][LOG];   // up[v][j] = 2^j-th ancestor of v
+int depth[MAXN];
+int n;
+
+// DFS to preprocess
+void dfs(int v, int parent) {
+    up[v][0] = parent;
+
+    for (int j = 1; j < LOG; j++) {
+        up[v][j] = up[up[v][j-1]][j-1]; // Binary Lifting
+    }
+
+    for (int to : adj[v]) {
+        if (to == parent) continue;
+        depth[to] = depth[v] + 1;
+        dfs(to, v);
+    }
+}
+
+// Lift node v by k steps
+int lift(int v, int k) {
+    for (int j = 0; j < LOG; j++) {
+        if (k & (1 << j)) {
+            v = up[v][j];
+        }
+    }
+    return v;
+}
+
+// LCA query
+int lca(int a, int b) {
+    if (depth[a] < depth[b])
+        swap(a, b);
+
+    // bring to same depth
+    a = lift(a, depth[a] - depth[b]);
+
+    if (a == b) return a;
+
+    // jump both
+    for (int j = LOG - 1; j >= 0; j--) {
+        if (up[a][j] != up[b][j]) {
+            a = up[a][j];
+            b = up[b][j];
+        }
+    }
+
+    // parent is LCA
+    return up[a][0];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+int kth_ancestor(int v, int k) {
+    return lift(v, k);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    depth[1] = 0;
+    dfs(1, 1);  // root = 1
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int u, v;
+        cin >> u >> v;
+        cout << lca(u, v) << "\n";
+    }
+}
+
+/*
+    Heavy Light Decomposition (HLD): 
+    - (question like: Sum on path(u, v), Max on path(u, v), Update node/edge, 
+        Query path frequently)
+    - Break tree into heavy chains so any path crosses only log(N) chains.
+
+    Concept:
+    - Heavy Child: A heavy child of a node is the child with the largest subtree size rooted at the child.
+    - Light Child: A light child of a node is any child that is not the heavy child.
+    - Heavy Edge: A heavy edge connects a node to its heavy child.
+    - Light Edge: A light edge connects a node to any of its light children.
+    - Heavy Path: A maximal path consisting only of heavy edges.
+*/
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+
+int parent[MAXN], depth[MAXN], heavy[MAXN];
+int head[MAXN], pos[MAXN], subtree[MAXN];
+int cur_pos;
+int n;
+
+vector<int> baseArray; // flattened tree
+SegmentTree seg;       // assume implemented
+
+// ---------- DFS: find heavy child ----------
+int dfs(int v, int p) {
+    parent[v] = p;
+    subtree[v] = 1;
+    int max_size = 0;
+    heavy[v] = -1;
+
+    for (int to : adj[v]) {
+        if (to == p) continue;
+
+        depth[to] = depth[v] + 1;
+        int child_size = dfs(to, v);
+        subtree[v] += child_size;
+
+        if (child_size > max_size) {
+            max_size = child_size;
+            heavy[v] = to;
+        }
+    }
+    return subtree[v];
+}
+
+// ---------- Decompose ----------
+void decompose(int v, int h, vector<int>& values) {
+    head[v] = h;
+    pos[v] = cur_pos++;
+    baseArray[pos[v]] = values[v];
+
+    // heavy edge first
+    if (heavy[v] != -1)
+        decompose(heavy[v], h, values);
+
+    // light edges
+    for (int to : adj[v]) {
+        if (to == parent[v] || to == heavy[v]) continue;
+        decompose(to, to, values);
+    }
+}
+
+// ---------- Build HLD ----------
+void build_hld(int root, vector<int>& values) {
+    cur_pos = 0;
+    baseArray.assign(n, 0);
+
+    depth[root] = 0;
+    dfs(root, 0);
+    decompose(root, root, values);
+
+    seg = SegmentTree(n);
+    seg.build(baseArray);
+}
+
+// ---------- Query path ----------
+int query_path(int a, int b) {
+    int res = 0;
+
+    while (head[a] != head[b]) {
+        if (depth[head[a]] < depth[head[b]])
+            swap(a, b);
+
+        res += seg.query(pos[head[a]], pos[a]);
+        a = parent[head[a]];
+    }
+
+    if (depth[a] > depth[b])
+        swap(a, b);
+
+    res += seg.query(pos[a], pos[b]);
+    return res;
+}
+
+// ---------- Point update ----------
+void update_node(int v, int val) {
+    seg.update(pos[v], val);
+}
+
+// -------------- Main ---------------
+int main() {
+    cin >> n;
+
+    vector<int> values(n + 1);
+    for (int i = 1; i <= n; i++)
+        cin >> values[i];
+
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    build_hld(1, values);
+
+    // example
+    cout << query_path(4, 7) << "\n";
+}
+
+/*
+    DSU on Tree (Sack)
+*/
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+int color[MAXN];
+
+int subtree[MAXN];
+int heavy[MAXN];
+int ans[MAXN];
+
+int cnt[MAXN];      // frequency of colors
+int distinct = 0;   // current distinct count
+int n;
+
+// ---------- DFS to find heavy child ----------
+int dfs(int v, int p) {
+    subtree[v] = 1;
+    heavy[v] = -1;
+    int max_size = 0;
+
+    for (int to : adj[v]) {
+        if (to == p) continue;
+
+        int sz = dfs(to, v);
+        subtree[v] += sz;
+
+        if (sz > max_size) {
+            max_size = sz;
+            heavy[v] = to;
+        }
+    }
+    return subtree[v];
+}
+
+// ---------- Add/remove subtree ----------
+void add_subtree(int v, int p, int val) {
+    cnt[color[v]] += val;
+
+    if (cnt[color[v]] == 1 && val == 1) distinct++;
+    if (cnt[color[v]] == 0 && val == -1) distinct--;
+
+    for (int to : adj[v]) {
+        if (to == p) continue;
+        add_subtree(to, v, val);
+    }
+}
+
+// ---------- DSU on Tree ----------
+void dfs_sack(int v, int p, bool keep) {
+    // 1. process light children
+    for (int to : adj[v]) {
+        if (to == p || to == heavy[v]) continue;
+        dfs_sack(to, v, false);
+    }
+
+    // 2. process heavy child
+    if (heavy[v] != -1)
+        dfs_sack(heavy[v], v, true);
+
+    // 3. merge light children into heavy data
+    for (int to : adj[v]) {
+        if (to == p || to == heavy[v]) continue;
+        add_subtree(to, v, +1);
+    }
+
+    // 4. add current node
+    cnt[color[v]]++;
+    if (cnt[color[v]] == 1) distinct++;
+
+    // 5. answer for this node
+    ans[v] = distinct;
+
+    // 6. cleanup if not keeping
+    if (!keep) {
+        add_subtree(v, p, -1);
+        distinct = 0;
+    }
+}
+
+// ---------- MAIN ----------
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+
+    for (int i = 1; i <= n; i++)
+        cin >> color[i];
+
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    dfs(1, 0);
+    dfs_sack(1, 0, true);
+
+    for (int i = 1; i <= n; i++)
+        cout << ans[i] << " ";
+}
+
+/*
+    Tree Rerooting DP
+
+    Time Complexity: O(n)
+*/
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+int subSize[MAXN];
+long long downDist[MAXN]; // sum inside subtree
+long long ans[MAXN];      // final answer for each node
+int n;
+
+// ---------- First DFS ----------
+void dfs1(int v, int p) {
+    subSize[v] = 1;
+    downDist[v] = 0;
+
+    for (int to : adj[v]) {
+        if (to == p) continue;
+
+        dfs1(to, v);
+
+        subSize[v] += subSize[to];
+        downDist[v] += downDist[to] + subSize[to];
+    }
+}
+
+// ---------- Reroot DFS ----------
+void dfs2(int v, int p) {
+    for (int to : adj[v]) {
+        if (to == p) continue;
+
+        // move root v -> to
+        ans[to] = ans[v]
+                  - subSize[to]           // nodes getting closer
+                  + (n - subSize[to]);    // nodes getting farther
+
+        dfs2(to, v);
+    }
+}
+
+// ---------- MAIN ----------
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    // root at 1
+    dfs1(1, 0);
+
+    ans[1] = downDist[1];
+
+    dfs2(1, 0);
+
+    for (int i = 1; i <= n; i++)
+        cout << ans[i] << " ";
+}
+
+/*
+    Centroid Decomposition
+
+    Centroid: A node whose removal splits the tree into components each of size ≤ N/2.
+    Height of centroid tree = O(log N)
+
+    It recursively:
+        1. finds centroid
+        2. marks it as removed
+        3. decomposes remaining components
+    This builds a centroid tree.
+*/
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+bool removed[MAXN];
+int subtree[MAXN];
+int parentCentroid[MAXN];
+
+int n;
+
+// ---------- compute subtree sizes ----------
+int dfs_size(int v, int p) {
+    subtree[v] = 1;
+
+    for (int to : adj[v]) {
+        if (to == p || removed[to]) continue;
+        subtree[v] += dfs_size(to, v);
+    }
+
+    return subtree[v];
+}
+
+// ---------- find centroid ----------
+int dfs_centroid(int v, int p, int sz) {
+    for (int to : adj[v]) {
+        if (to == p || removed[to]) continue;
+
+        if (subtree[to] > sz / 2)
+            return dfs_centroid(to, v, sz);
+    }
+
+    return v;
+}
+
+// ---------- build centroid tree ----------
+void build_centroid(int v, int p) {
+    int sz = dfs_size(v, -1);
+    int centroid = dfs_centroid(v, -1, sz);
+
+    parentCentroid[centroid] = p;
+    removed[centroid] = true;
+
+    for (int to : adj[centroid]) {
+        if (!removed[to]) {
+            build_centroid(to, centroid);
+        }
+    }
+}
+
+// ---------- MAIN ----------
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    build_centroid(1, 0);
+
+    // parentCentroid[] now stores centroid tree
+}
